@@ -3,8 +3,10 @@
 # Check dependancies
 if (!requireNamespace("ape", quietly = TRUE))
     install.packages("ape")
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
 if (!requireNamespace("phyloseq", quietly = TRUE))
-    install.packages("phyloseq")
+    BiocManager::install("phyloseq")
 if (!requireNamespace("parallel", quietly = TRUE))
     install.packages("parallel")
 if (!requireNamespace("doParallel", quietly = TRUE))
