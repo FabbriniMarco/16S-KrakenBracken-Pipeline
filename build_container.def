@@ -42,7 +42,10 @@ From: centos:latest
     chmod 755 *
     mkdir /mnt/databases/bmtagger
     #KneadData
-    pip install kneaddata
+    pip install kneaddata==0.7.2
+    cd /usr/bin
+    wget https://github.com/Benson-Genomics-Lab/TRF/releases/download/v4.09.1/trf409.linux64 -O trf
+    chmod +x trf
     #Kraken2
     cd /opt/programs
     git clone https://github.com/DerrickWood/kraken2
