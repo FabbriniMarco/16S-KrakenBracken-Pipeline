@@ -243,7 +243,7 @@ else if [ "$GENOMEFILTER" = "TRUE" ]; then
     # Filter out human reads using the binded database
     for x in $(cat paired_sample_list.txt); do
     ((i=i%${PROC})); ((i++==0)) && wait
-        kneaddata --input seqs/${x}_1.fastq --input seqs/${x}_2.fastq \
+        kneaddata --input1 seqs/${x}_1.fastq --input2 seqs/${x}_2.fastq \
         --run-bmtagger \
         --reference-db ${GENOMEPATH} \
         --output seqs_filtered/ \
@@ -282,10 +282,7 @@ else if [ "$GENOMEFILTER" = "TRUE" ]; then
         for x in $(cat single_sample_list.txt); do 
             sed -i "s/\\#0\\/1//g" seqs_filtered/${x}_1_kneaddata_paired_1.fastq ; 
             sed -i "s/:N/ 1:N/g" seqs_filtered/${x}_1_kneaddata_paired_1.fastq ;
-            sed -i "s/\\#0\\/2//g" seqs_filtered/${x}_1_kneaddata_paired_2.fastq ;
-            sed -i "s/:N/ 2:N/g" seqs_filtered/${x}_1_kneaddata_paired_2.fastq ;
             mv seqs_filtered/${x}_1_kneaddata_paired_1.fastq seqs_filtered/${x}_1.fastq ;
-            mv seqs_filtered/${x}_1_kneaddata_paired_2.fastq seqs_filtered/${x}_2.fastq ;
         done
         for x in $(cat single_sample_list.txt); do
             wc -l seqs_filtered/${x}_1.fastq >> reads_counts_FILTERED.txt ;
@@ -302,7 +299,7 @@ else if echo $GENOMEFILTER | grep -q "/" ; then
         # Filter out human reads using the provided custom database
         for x in $(cat paired_sample_list.txt); do
         ((i=i%${PROC})); ((i++==0)) && wait
-            kneaddata --input seqs/${x}_1.fastq --input seqs/${x}_2.fastq \
+            kneaddata --input1 seqs/${x}_1.fastq --input2 seqs/${x}_2.fastq \
             --run-bmtagger \
             --reference-db ${GENOMEFILTER} \
             --output seqs_filtered/ \
