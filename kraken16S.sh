@@ -243,7 +243,7 @@ else if [ "$GENOMEFILTER" = "TRUE" ]; then
     # Filter out human reads using the binded database
     for x in $(cat paired_sample_list.txt); do
     ((i=i%${PROC})); ((i++==0)) && wait
-        kneaddata --input1 seqs/${x}_1.fastq --input2 seqs/${x}_2.fastq \
+        kneaddata --input seqs/${x}_1.fastq --input seqs/${x}_2.fastq \
         --run-bmtagger \
         --reference-db ${GENOMEPATH} \
         --output seqs_filtered/ \
@@ -299,7 +299,7 @@ else if echo $GENOMEFILTER | grep -q "/" ; then
         # Filter out human reads using the provided custom database
         for x in $(cat paired_sample_list.txt); do
         ((i=i%${PROC})); ((i++==0)) && wait
-            kneaddata --input1 seqs/${x}_1.fastq --input2 seqs/${x}_2.fastq \
+            kneaddata --input seqs/${x}_1.fastq --input seqs/${x}_2.fastq \
             --run-bmtagger \
             --reference-db ${GENOMEFILTER} \
             --output seqs_filtered/ \
