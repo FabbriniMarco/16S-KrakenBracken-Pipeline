@@ -448,6 +448,7 @@ mkdir RESULTS
 mv otu_table_final.tsv RESULTS/.
 mv final_otu_table_matrix_relabb.csv RESULTS/.
 mv final_otu_table_matrix.csv RESULTS/.
+mv taxa_summary RESULTS/.
 
 if $CALCDIV; then
     log_and_display "\n\t\t${GREY}Computing alpha and beta diversity metrics${NC}"
