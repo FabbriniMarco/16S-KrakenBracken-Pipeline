@@ -5,11 +5,14 @@ This repository hosts a containerized pipeline tailored for 16S rRNA amplicon se
 The pipeline is designed to process FASTQ 16S amplicon files, preferably in paired-end format. While it can handle mixed paired-end and single-end data, it does not support solely single-end data. Upon input, sequences undergo quality filtering using [fastp](https://github.com/OpenGene/fastp), ensuring high-quality data for downstream analysis. Additionally, the pipeline offers the capability to filter sequences for a reference genome using [KneadData](https://github.com/biobakery/kneaddata), providing flexibility for various research needs.
 
 Processed sequences are then mapped onto the [SILVA 138_1 SSURef database](https://www.arb-silva.de/no_cache/download/archive/release_138_1/) using Kraken2, with taxonomic assignments obtained through Bracken. The resulting taxonomic outputs are further processed to generate counts and relative percentages for OTU tables. Additionally, the pipeline calculates alpha diversity values using several metrics and produces beta diversity distance matrices, enriching the depth of analysis.
+A schematic overview of the pipeline is shown in the chart below, created in Lucidchart ([Lucid.co](https://lucid.co/)):
+
+![image](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/assets/83694005/ffa912cf-f19d-4320-8203-b7316bdc6075)
 
 
 ## Dependencies
 
-Before using the container, ensure you have [Singularity](https://docs.sylabs.io/guides/3.5/user-guide/quick_start.html#quick-installation-steps) installed on your machine.
+Before using the container, ensure to have [Singularity](https://docs.sylabs.io/guides/3.5/user-guide/quick_start.html#quick-installation-steps) installed on your machine.
 
 ## Installation
 
@@ -22,7 +25,7 @@ Download the latest release from the [Release](https://github.com/FabbriniMarco/
 wget https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases/download/v1/K16S-v1.tar.gz
 tar -zxvf K16S-v1.tar.gz
 ```
-You don't need to git clone this repository.
+You will find the container inside the tarball. You can also download the container from the file list in the main branch of this repo.
 
 ### Build your own container
 Clone this repository or download the build_container.def file and use it to build the Singularity container:
@@ -41,7 +44,7 @@ cd /workdir
 kraken16S -i rawseqs/
 ```
 
-You can also perform reference genome filtering, such as the human genome, by binding a BMTagger-indexed genome located in the folder '/mnt/databases/bmtagger', as follows:
+You can also perform reference genome filtering, such as with the human genome, by binding a BMTagger-indexed genome located in the folder '/mnt/databases/bmtagger', as follows:
 
 ``` bash
 # In this example I have a BMTagger-indexed database in the local path '/mnt/luks/databases/hg38'
@@ -97,7 +100,7 @@ makeblastdb -in hg38.fa -dbtype nucl
 The database local path needs to be binded to the container in the /mnt/database/bmtagger path
 
 ## Possible function of the script
-You can consult the function details of the pipeline invoking the function name:
+You can consult the function details of the pipeline invoking the main function name:
 
 ```bash
 singularity exec K16S.sif kraken16S
