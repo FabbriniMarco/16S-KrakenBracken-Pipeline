@@ -9,10 +9,12 @@ A schematic overview of the pipeline is shown in the chart below, created in Luc
 
 ![image](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/assets/83694005/ffa912cf-f19d-4320-8203-b7316bdc6075)
 
+<br>
 
 ## Dependencies
 
 Before using the container, ensure to have [Singularity](https://docs.sylabs.io/guides/3.5/user-guide/quick_start.html#quick-installation-steps) installed on your machine.
+<br><br>
 
 ## Installation
 
@@ -26,14 +28,14 @@ wget https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases/downlo
 tar -zxvf K16S-v1.tar.gz
 ```
 You will find the container inside the tarball. You can also download the container from the file list in the main branch of this repo.
-
+<br>
 ### Build your own container
 Clone this repository or download the build_container.def file and use it to build the Singularity container:
 ```bash
 singularity build K16S.sif build_container.def
 ```
 Note that during the Kraken2 Silva database building process, 24 threads will be utilized.
-
+<br><br>
 ## Usage instruction
 ### Running inside the container
 Executing commands within the container is straightforward. Assuming you have a folder named 'rawseqs' containing your raw 16S FASTQ sequences (in .fastq or .fastq.gz format) in the current path, run:
@@ -52,7 +54,7 @@ singularity exec --bind /mnt/luks/databases/hg38:/mnt/databases/bmtagger --bind 
 cd /workdir
 kraken16S -i test_data -f TRUE
 ```
-
+<br><br>
 ## Pipeline outputs
 
 The output of the pipeline looks like this:
@@ -84,7 +86,7 @@ AnalysisKraken16_2024-05-13_silvaNR99/
 │       └── otu_table_L6.tsv
 └── sample_list.txt
 ```
-
+<br><br>
 ## Generating a BMTagger-compatible reference genome
 To build a reference genome to be used for filtering the RAW reads, the database needs to be formatted properly.
 
@@ -98,8 +100,8 @@ srprism mkindex -i hg38.fa -o hg38.srprism -M 7168
 makeblastdb -in hg38.fa -dbtype nucl
 ```
 The database local path needs to be binded to the container in the /mnt/database/bmtagger path
-
-## Possible function of the script
+<br><br>
+## Possible functions of the script
 You can consult the function details of the pipeline invoking the main function name:
 
 ```bash
