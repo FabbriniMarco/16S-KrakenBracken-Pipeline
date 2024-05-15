@@ -24,10 +24,10 @@ Download the latest release from the [Release](https://github.com/FabbriniMarco/
 
 ```bash
 # Example
-wget https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases/download/v1/K16S-v1.gz
-pigz -d K16S-v1.gz
+wget https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases/download/v1/K16S.sif.gz
+pigz -d K16S.sif.gz
 # Or
-gunzip K16S-v1.gz
+gunzip K16S.sif.gz
 ```
 You will find the container inside the tarball. You can also download the container from the file list in the main branch of this repo.
 <br>
