@@ -39,7 +39,7 @@ singularity pull library://fabbrinimarco/16s-krakenbracken-pipeline/k16s:v1
 # For an added layer of security, it can be also pulled by unique sha256 sum
 singularity pull --arch amd64 library://fabbrinimarco/16s-krakenbracken-pipeline/k16s:sha256.a5e72d21fe14fc4396ccd17117003f27e231f1c5af4559b1d53e8ba3415bed4c
 # Check the container
-singularity run K16S.sif kraken16S 
+singularity run k16s_v1.sif kraken16S 
 ```
 
 <br>
@@ -47,7 +47,7 @@ singularity run K16S.sif kraken16S
 ### Build your own container
 Clone this repository or download the build_container.def file and use it to build the Singularity container:
 ```bash
-singularity build K16S.sif build_container.def
+singularity build k16s_v1.sif build_container.def
 ```
 Note that during the Kraken2 Silva database building process, 24 threads will be utilized.
 
@@ -58,7 +58,7 @@ Note that during the Kraken2 Silva database building process, 24 threads will be
 Executing commands within the container is straightforward. Assuming you have a folder named 'rawseqs' containing your raw 16S FASTQ sequences (in .fastq or .fastq.gz format) in the current path, run:
 
 ``` bash
-singularity exec --bind $(pwd):/workdir K16S.sif bash
+singularity exec --bind $(pwd):/workdir k16s_v1.sif bash
 cd /workdir
 kraken16S -i rawseqs/
 ```
@@ -67,7 +67,7 @@ You can also perform reference genome filtering, such as with the human genome, 
 
 ``` bash
 # In this example I have a BMTagger-indexed database in the local path '/mnt/luks/databases/hg38'
-singularity exec --bind /mnt/luks/databases/hg38:/mnt/databases/bmtagger --bind $(pwd):/workdir K16S.sif bash
+singularity exec --bind /mnt/luks/databases/hg38:/mnt/databases/bmtagger --bind $(pwd):/workdir k16s_v1.sif bash
 cd /workdir
 kraken16S -i test_data -f TRUE
 ```
@@ -128,7 +128,7 @@ The database local path needs to be binded to the container in the /mnt/database
 You can consult the function details of the pipeline invoking the main function name:
 
 ```bash
-singularity exec K16S.sif kraken16S
+singularity exec k16s_v1.sif kraken16S
 ```
 ![image](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/assets/83694005/523df061-48a8-4a38-9907-ffdfa5b682d9)
 
