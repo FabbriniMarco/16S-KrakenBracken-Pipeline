@@ -10,15 +10,15 @@ A schematic overview of the pipeline is shown in the chart below, created in Luc
 ![image](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/assets/83694005/ffa912cf-f19d-4320-8203-b7316bdc6075)
 
 ## Table of contents
-1. [Dependencies](README.md#dependencies)
-2. [Installation](README.md#installation)
-	- [Pre-built container (recommended)](README.md#pre-built-container-recommended)
-	- [Build your own container](README.md#build-your-own-container)
-3. [Usage instructions](README.md#usage-instruction)
-	- [Running inside the container](README.md#running-inside-the-container)
-4. [Pipeline outputs](README.md#pipeline-outputs)
-5. [Generating a BMTagger-compatible reference genome](README.md#generating-a-bmtagger-compatible-reference-genome)
-6. [Parameters of the script](README.md#parameters-of-the-script)
+1. [Dependencies](#dependencies)
+2. [Installation](#installation)
+	- [Pre-built container (recommended)](#pre-built-container-recommended)
+	- [Build your own container](#build-your-own-container)
+3. [Usage instructions](#usage-instruction)
+	- [Running inside the container](#running-inside-the-container)
+4. [Pipeline outputs](#pipeline-outputs)
+5. [Generating a BMTagger-compatible reference genome](#generating-a-bmtagger-compatible-reference-genome)
+6. [Parameters of the script](#parameters-of-the-script)
 
 <br>
 
