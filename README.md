@@ -162,6 +162,9 @@ singularity exec k16s_v1.sif kraken16S
 ![image](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/assets/83694005/523df061-48a8-4a38-9907-ffdfa5b682d9)
 
 
+For example, you can control the number of parallel threads used for the read mapping and read compress/decompress operations. You can decide wether or not to perform fastp read quality check and filtering, as well as eventual host genome filtering. If you deal with sequences with different length rather than 250bp for paired-end data and 500bp for single-end data you can also edit the read length Bracken settings choosing either 250 or 500bp options.
+You can also decide to perform only taxonomic assignment and skip the alpha dn beta diversity analyses, or keep the temp files (i.e., the kraken2 and bracken outputs, as well as filtered reads).
+
 
 
 
