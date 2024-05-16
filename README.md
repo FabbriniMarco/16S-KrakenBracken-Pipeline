@@ -20,6 +20,7 @@ A schematic overview of the pipeline is shown in the chart below, created in Luc
 4. [Pipeline outputs](#pipeline-outputs)
 5. [Generating a BMTagger-compatible reference genome](#generating-a-bmtagger-compatible-reference-genome)
 6. [Parameters of the script](#parameters-of-the-script)
+7. [Citation](#citation)
 
 <br>
 
@@ -164,6 +165,25 @@ singularity exec k16s_v1.sif kraken16S
 
 For example, you can control the number of parallel threads used for the read mapping and read compress/decompress operations. You can decide wether or not to perform fastp read quality check and filtering, as well as eventual host genome filtering. If you deal with sequences with different length rather than 250bp for paired-end data and 500bp for single-end data you can also edit the read length Bracken settings choosing either 250 or 500bp options.
 You can also decide to perform only taxonomic assignment and skip the alpha dn beta diversity analyses, or keep the temp files (i.e., the kraken2 and bracken outputs, as well as filtered reads).
+
+<br>
+
+## Citation
+
+You can cite the use of this pipeline as such:
+
+```diff
+@Manual{,
+  title = {16S-KrakenBracken-Pipeline: Containerized pipeline for 16S rRNA amplicon sequencing analyses using Kraken2/Bracken},
+  author = {Marco Fabbrini},
+  year = {2024},
+  note = {Singularity image v1},
+  url = {https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline.git},
+}
+```
+Example: 
+> Fabbrini, M. (2024) '16S-KrakenBracken-Pipeline - Containerized pipeline for 16S rRNA amplicon sequencing analyses using Kraken2/Bracken'. Available on Github: https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline
+
 
 
 
