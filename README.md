@@ -35,7 +35,7 @@ Before using the container, ensure to have [Singularity](https://docs.sylabs.io/
 The prebuilt ready-to-use container is [available on Sylabs cloud platform](https://cloud.sylabs.io/library/fabbrinimarco/16s-krakenbracken-pipeline/k16s) and can be easily downloaded: 
 
 ```bash
-singularity pull library://fabbrinimarco/16s-krakenbracken-pipeline/k16s
+singularity pull library://fabbrinimarco/16s-krakenbracken-pipeline/k16s:v1
 # For an added layer of security, it can be also pulled by unique sha256 sum
 singularity pull --arch amd64 library://fabbrinimarco/16s-krakenbracken-pipeline/k16s:sha256.a5e72d21fe14fc4396ccd17117003f27e231f1c5af4559b1d53e8ba3415bed4c
 # Check the container
