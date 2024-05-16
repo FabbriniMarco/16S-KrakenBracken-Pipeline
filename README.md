@@ -10,7 +10,7 @@ A schematic overview of the pipeline is shown in the chart below, created in Luc
 ![image](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/assets/83694005/ffa912cf-f19d-4320-8203-b7316bdc6075)
 
 ## Table of contents
-1. [Dependencies](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline#dependencies)
+1. [Dependencies](dependencies)
 2. [Installation](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline#installation)
 	- [Pre-built container (recommended)](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline#pre-built-container-recommended)
 	- [Build your own container](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline#build-your-own-container)
