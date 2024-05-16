@@ -9,34 +9,50 @@ A schematic overview of the pipeline is shown in the chart below, created in Luc
 
 ![image](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/assets/83694005/ffa912cf-f19d-4320-8203-b7316bdc6075)
 
+## Table of contents
+1. [Dependencies](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline#dependencies)
+2. [Installation](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline#installation)
+	- [Pre-built container (recommended)](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline#pre-built-container-recommended)
+	- [Build your own container](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline#build-your-own-container)
+3. [Usage instructions](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline#usage-instruction)
+	- [Running inside the container](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline#running-inside-the-container)
+4. [Pipeline outputs](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline#pipeline-outputs)
+5. [Generating a BMTagger-compatible reference genome](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline#generating-a-bmtagger-compatible-reference-genome)
+6. [Parameters of the script](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline#parameters-of-the-script)
+
 <br>
 
 ## Dependencies
 
 Before using the container, ensure to have [Singularity](https://docs.sylabs.io/guides/3.5/user-guide/quick_start.html#quick-installation-steps) installed on your machine.
-<br><br>
+
+<br>
 
 ## Installation
 
 ### Pre-built container (recommended)
 
-Download the latest release from the [Release](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases) section. It's ready to use:
+The prebuilt ready-to-use container is [available on Sylabs cloud platform](https://cloud.sylabs.io/library/fabbrinimarco/16s-krakenbracken-pipeline/k16s) and can be easily downloaded: 
 
 ```bash
-# Example
-wget https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases/download/v1/K16S.sif
+singularity pull library://fabbrinimarco/16s-krakenbracken-pipeline/k16s
+# For an added layer of security, it can be also pulled by unique sha256 sum
+singularity pull --arch amd64 library://fabbrinimarco/16s-krakenbracken-pipeline/k16s:sha256.a5e72d21fe14fc4396ccd17117003f27e231f1c5af4559b1d53e8ba3415bed4c
 # Check the container
 singularity run K16S.sif kraken16S 
 ```
-You will find the container inside the tarball. You can also download the container from the file list in the main branch of this repo.
+
 <br>
+
 ### Build your own container
 Clone this repository or download the build_container.def file and use it to build the Singularity container:
 ```bash
 singularity build K16S.sif build_container.def
 ```
 Note that during the Kraken2 Silva database building process, 24 threads will be utilized.
-<br><br>
+
+<br>
+
 ## Usage instruction
 ### Running inside the container
 Executing commands within the container is straightforward. Assuming you have a folder named 'rawseqs' containing your raw 16S FASTQ sequences (in .fastq or .fastq.gz format) in the current path, run:
@@ -47,7 +63,7 @@ cd /workdir
 kraken16S -i rawseqs/
 ```
 
-You can also perform reference genome filtering, such as with the human genome, by binding a BMTagger-indexed genome located in the folder '/mnt/databases/bmtagger', as follows:
+You can also perform reference genome filtering, such as with the human genome, by binding a local BMTagger-indexed genome to the container folder '/mnt/databases/bmtagger', as follows:
 
 ``` bash
 # In this example I have a BMTagger-indexed database in the local path '/mnt/luks/databases/hg38'
@@ -55,7 +71,9 @@ singularity exec --bind /mnt/luks/databases/hg38:/mnt/databases/bmtagger --bind 
 cd /workdir
 kraken16S -i test_data -f TRUE
 ```
-<br><br>
+
+<br>
+
 ## Pipeline outputs
 
 The output of the pipeline looks like this:
@@ -63,12 +81,12 @@ The output of the pipeline looks like this:
 ``` diff
 AnalysisKraken16_2024-05-13_silvaNR99/
 ├── paired_sample_list.txt
-├── pipeline_log.txt
-├── reads_counts_FILTERED.txt
-├── reads_counts.txt
+├── pipeline_log.txt  #Logs for debugging purposes
+├── reads_counts_FILTERED.txt  # The number of reads in the forward FASTQ after FASTP filtering (if performed)
+├── reads_counts.txt  # The number of reads in the RAW forward FASTQ
 ├── RESULTS
-│   ├── alpha.xlsx
-│   ├── beta_diversity
+│   ├── alpha.xlsx  # Contains several alpha diversity metrics value for each sample
+│   ├── beta_diversity  # Each subfolder contains a pairwise distance matrix
 │   │   ├── braycurtis
 │   │   │   └── distance-matrix.tsv
 │   │   ├── jaccard
@@ -77,17 +95,19 @@ AnalysisKraken16_2024-05-13_silvaNR99/
 │   │   │   └── distance-matrix.tsv
 │   │   └── weighted_unifrac
 │   │       └── distance-matrix.tsv
-│   ├── final_otu_table_matrix.csv
-│   ├── final_otu_table_matrix_relabb.csv
-│   ├── logs.log
-│   ├── otu_table_final.tsv
-│   └── taxa_summary
-│       ├── otu_table_L2.tsv
+│   ├── final_otu_table_matrix.csv  # Otu table with counts reported across levels L2, L5 and L6: (L2, phylum; L5, family; L6, genera)
+│   ├── final_otu_table_matrix_relabb.csv  # Otu table with relative counts reported across levels L2, L5 and L6. The relativa abundance sums up to 100 within each level individually
+│   ├── logs.log  # Summary of the parameters passed to the call function
+│   ├── otu_table_final.tsv  # Otu table in tidy format, as "final_otu_table_matrix.csv"
+│   └── taxa_summary  # Otu table in tabular format divided by taxonomic ranks
+│       ├── otu_table_L2.tsv  
 │       ├── otu_table_L5.tsv
 │       └── otu_table_L6.tsv
 └── sample_list.txt
 ```
-<br><br>
+
+<br>
+
 ## Generating a BMTagger-compatible reference genome
 To build a reference genome to be used for filtering the RAW reads, the database needs to be formatted properly.
 
@@ -101,8 +121,10 @@ srprism mkindex -i hg38.fa -o hg38.srprism -M 7168
 makeblastdb -in hg38.fa -dbtype nucl
 ```
 The database local path needs to be binded to the container in the /mnt/database/bmtagger path
-<br><br>
-## Possible functions of the script
+
+<br>
+
+## Parameters of the script
 You can consult the function details of the pipeline invoking the main function name:
 
 ```bash
