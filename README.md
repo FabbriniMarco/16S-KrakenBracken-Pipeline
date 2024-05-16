@@ -16,6 +16,7 @@ A schematic overview of the pipeline is shown in the chart below, created in Luc
 	- [Build your own container](#build-your-own-container)
 3. [Usage instructions](#usage-instruction)
 	- [Running inside the container](#running-inside-the-container)
+	- [Pass a script to the container](#pass-a-script-to-the-container)
 4. [Pipeline outputs](#pipeline-outputs)
 5. [Generating a BMTagger-compatible reference genome](#generating-a-bmtagger-compatible-reference-genome)
 6. [Parameters of the script](#parameters-of-the-script)
@@ -61,6 +62,8 @@ Executing commands within the container is straightforward. Assuming you have a 
 singularity exec --bind $(pwd):/workdir k16s_v1.sif bash
 cd /workdir
 kraken16S -i rawseqs/
+# Once the script is completed remember to close the container shell
+exit
 ```
 
 You can also perform reference genome filtering, such as with the human genome, by binding a local BMTagger-indexed genome to the container folder '/mnt/databases/bmtagger', as follows:
@@ -69,7 +72,33 @@ You can also perform reference genome filtering, such as with the human genome, 
 # In this example I have a BMTagger-indexed database in the local path '/mnt/luks/databases/hg38'
 singularity exec --bind /mnt/luks/databases/hg38:/mnt/databases/bmtagger --bind $(pwd):/workdir k16s_v1.sif bash
 cd /workdir
-kraken16S -i test_data -f TRUE
+kraken16S -i rawseqs/ -f TRUE
+```
+<br>
+
+### Pass a script to the container
+You can also pass the container a shell script to be executed to avoid opening a shell inside the container:
+
+```bash
+echo -e "#!/bin/bash
+cd /workdir
+kraken16S -i rawseqs/" >> kraken16Scall.sh
+
+chmod +x kraken16Scall.sh
+
+singularity exec --bind $(pwd):/workdir k16s_v1.sif kraken16Scall.sh
+```
+
+Or with genome filtering, as the example above:
+
+```bash
+echo -e "#!/bin/bash
+cd /workdir
+kraken16S -i rawseqs/ -f TRUE" >> kraken16Scall.sh
+
+chmod +x kraken16Scall.sh
+
+singularity exec --bind /mnt/luks/databases/hg38:/mnt/databases/bmtagger --bind $(pwd):/workdir k16s_v1.sif kraken16Scall.sh
 ```
 
 <br>
