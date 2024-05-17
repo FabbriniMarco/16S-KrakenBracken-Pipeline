@@ -125,7 +125,7 @@ KVERSION=$(kraken2 --version | head -1)
 BVERSION=$(bracken -v)
 
 mkdir AnalysisKraken16_$(date +%F)_${DATABASE}
-ls $INPUT_FOLDER | cut -d_ -f 1 | sed -n 'p;n' > AnalysisKraken16_$(date +%F)_${DATABASE}/sample_list.txt
+ls $INPUT_FOLDER | cut -d_ -f 1 | sort | uniq > AnalysisKraken16_$(date +%F)_${DATABASE}/sample_list.txt
 SAMPLES_PROCESSED=$(wc -l AnalysisKraken16_$(date +%F)_${DATABASE}/sample_list.txt | cut -f1 -d " ");
 cd AnalysisKraken16_$(date +%F)_${DATABASE}
 
