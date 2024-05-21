@@ -52,6 +52,38 @@ Clone this repository or download the build_container.def file and use it to bui
 singularity build k16s_v1.sif build_container.def
 ```
 Note that during the Kraken2 Silva database building process, 24 threads will be utilized.
+Due to the unconsistent access to NCBI FTP services, the container build might exit while downloading NCBI BLAST+.
+If you encounter this issue and still want to build your own container you can build it without BLAST+ as sandbox using the kraken16S_container_noBLAST+.def from this repository, install BLAST+ manually and then recreate the SIF image:
+
+```bash
+singularity build --fix-perms --sandbox k16s_v1 kraken16S_container_noBLAST+.def
+singularity exec --writable k16s_v1 bash
+```
+
+```bash
+# Inside the container shell
+cd /opt/programs
+
+curl https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.15.0/ncbi-blast-2.15.0+-x64-linux.tar.gz.md5 -o known_checksum.md5
+curl -o ncbi-blast-2.15.0+-x64-linux.tar.gz https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.15.0/ncbi-blast-2.15.0+-x64-linux.tar.gz
+
+md5sum ncbi-blast-2.15.0+-x64-linux.tar.gz > curled_checksum.md5
+diff known_checksum.md5 curled_checksum.md5
+# If nothing prints, checksums correspond and you can proceed
+
+rm -fr *.md5
+tar -zxvf ncbi-blast-2.15.0+-x64-linux.tar.gz
+# If the above command return EOF errors the file is deleted and should be downloaded once again
+
+rm -fr ncbi-blast-2.15.0+-x64-linux.tar.gz
+mv ncbi-blast-2.15.0+ ncbi-blast
+
+exit
+```
+
+```bash
+singularity build k16s_v1.sif k16s_v1/
+```
 
 <br>
 
