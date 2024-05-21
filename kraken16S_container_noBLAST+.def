@@ -1,0 +1,97 @@
+Bootstrap: docker
+From: centos:latest
+
+%environment
+    export PATH=/opt/programs/ncbi-blast/bin:"$PATH"
+    export PATH=/opt/programs/kraken2:"$PATH"
+    export PATH=/opt/programs/BMTagger:"$PATH"
+    export PATH=/opt/programs/Bracken:"$PATH"
+
+%post
+    cd /etc/yum.repos.d/
+    sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+    sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+    dnf install -y --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm
+    dnf update libmodulemd -y
+    dnf install -y 'dnf-command(config-manager)'
+    dnf config-manager --set-enabled powertools
+    dnf upgrade --refresh -y
+    dnf -y install util-linux-user autoconf automake R wget cmake git pigz gcc-c++ zlib-devel.x86_64 libstdc++-static libcurl-devel openssl-devel
+    yum install -y python39-devel
+    unlink /usr/bin/python3
+    ln -s /usr/bin/python3.9 /usr/bin/python3
+    ln -s /usr/bin/python3 /usr/bin/python
+    ln -s /usr/bin/pip3 /usr/bin/pip
+    pip3 install --upgrade pip
+    pip3 install pandas numpy
+    mkdir /opt/programs
+    mkdir /mnt/databases
+    #FASTP
+    cd /usr/bin
+    wget http://opengene.org/fastp/fastp
+    chmod a+x ./fastp
+    #BMTagger
+    cd /opt/programs && mkdir BMTagger && cd BMTagger
+    wget --reject fa,wbm ftp.ncbi.nlm.nih.gov:pub/agarwala/bmtagger/*
+    chmod 755 *
+    mkdir /mnt/databases/bmtagger
+    #KneadData
+    pip install kneaddata==0.7.2
+    cd /usr/bin
+    wget https://github.com/Benson-Genomics-Lab/TRF/releases/download/v4.09.1/trf409.linux64 -O trf
+    chmod +x trf
+    #Kraken2
+    cd /opt/programs
+    git clone https://github.com/DerrickWood/kraken2
+    cd kraken2
+    ./install_kraken2.sh .
+    sed -i 's/FTP_SERVER="ftp/FTP_SERVER="https/' /opt/programs/kraken2/download_genomic_library.sh
+    sed -i 's/s#^ftp/s#^https/' /opt/programs/kraken2/rsync_from_ncbi.pl
+    mkdir /mnt/databases/kraken_db
+    cd /mnt/databases/kraken_db/
+    /opt/programs/kraken2/kraken2-build --db silvaNR99 --special silva --threads 24
+    cd silvaNR99
+    wget https://www.arb-silva.de/fileadmin/silva_databases/release_138_1/Exports/taxonomy/tax_slv_ssu_138.1.tre.gz
+    pigz -d tax_slv_ssu_138.1.tre.gz
+    #Bracken
+    cd /opt/programs
+    git clone https://github.com/jenniferlu717/Bracken.git
+    cd Bracken
+    bash install_bracken.sh
+    cd /mnt/databases/kraken_db
+    export PATH=/opt/programs/kraken2:"$PATH"
+    /opt/programs/Bracken/bracken-build -d silvaNR99 -t 24 -k 35 -l 250
+    rm -fr silvaNR99/database.kraken
+    /opt/programs/Bracken/bracken-build -d silvaNR99 -t 24 -k 35 -l 500
+    #Otu table custom processing scripts
+    cd /usr/bin
+    wget https://raw.githubusercontent.com/FabbriniMarco/16S-KrakenBracken-Pipeline/main/CPU_process_otutab.py
+    wget https://raw.githubusercontent.com/FabbriniMarco/16S-KrakenBracken-Pipeline/main/CPU_process_otutab_relabb.py
+    wget https://raw.githubusercontent.com/FabbriniMarco/16S-KrakenBracken-Pipeline/main/compute_diversity_kraken.r
+    chmod +x CPU_process_otutab*
+    chmod +x compute_diversity_kraken.r
+    #Create workdir
+    cd
+    mkdir /workdir
+    chmod 777 /workdir
+    #Setup required R packages
+    echo -e ' 
+    install.packages("ape", repos="https://cran.mirror.garr.it/CRAN/")
+    install.packages("BiocManager", repos="https://cran.mirror.garr.it/CRAN/")
+    BiocManager::install("phyloseq", update=FALSE)
+    install.packages("parallel", repos="https://cran.mirror.garr.it/CRAN/")
+    install.packages("doParallel", repos="https://cran.mirror.garr.it/CRAN/")
+    install.packages("vegan", repos="https://cran.mirror.garr.it/CRAN/")
+    install.packages("otuSummary", repos="https://cran.mirror.garr.it/CRAN/")
+    install.packages("picante", repos="https://cran.mirror.garr.it/CRAN/")
+    install.packages("openxlsx", repos="https://cran.mirror.garr.it/CRAN/") ' > r_install_packages.R
+    Rscript r_install_packages.R
+    rm -fr r_install_packages.R
+    #Get the pipeline script
+    cd /usr/bin
+    wget https://raw.githubusercontent.com/FabbriniMarco/16S-KrakenBracken-Pipeline/main/kraken16S.sh -O kraken16S
+    chmod +x kraken16S
+
+%labels
+    Author Marco Fabbrini - fabbrinimarco.mf@gmail.com
+    Version v1
