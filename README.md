@@ -7,7 +7,8 @@ The pipeline is designed to process FASTQ 16S amplicon files, preferably in pair
 Processed sequences are then mapped onto the [SILVA 138_1 SSURef database](https://www.arb-silva.de/no_cache/download/archive/release_138_1/) using Kraken2, with taxonomic assignments obtained through Bracken. The resulting taxonomic outputs are further processed to generate counts and relative percentages for OTU tables. Additionally, the pipeline calculates alpha diversity values using several metrics and produces beta diversity distance matrices, enriching the depth of analysis.
 A schematic overview of the pipeline is shown in the chart below, created in Lucidchart ([Lucid.co](https://lucid.co/)):
 
-![image](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/assets/83694005/ffa912cf-f19d-4320-8203-b7316bdc6075)
+![Screenshot 2024-05-15 120420](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/assets/83694005/e91ae0d9-3113-4dd4-bf58-86926a7d9076)
+
 
 ## Table of contents
 1. [Dependencies](#dependencies)
@@ -192,7 +193,9 @@ You can consult the function details of the pipeline invoking the main function 
 ```bash
 singularity exec k16s_v1.sif kraken16S
 ```
-![image](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/assets/83694005/523df061-48a8-4a38-9907-ffdfa5b682d9)
+
+
+![Screenshot 2024-05-13 175759](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/assets/83694005/478a84ea-c17f-4b21-a6b4-cab3a0d8f2dc)
 
 
 For example, you can control the number of parallel threads used for the read mapping and read compress/decompress operations. You can decide wether or not to perform fastp read quality check and filtering, as well as eventual host genome filtering. If you deal with sequences with different length rather than 250bp for paired-end data and 500bp for single-end data you can also edit the read length Bracken settings choosing either 250 or 500bp options.
