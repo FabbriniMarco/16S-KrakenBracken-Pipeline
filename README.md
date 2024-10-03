@@ -20,7 +20,7 @@ A schematic overview of the pipeline is shown in the chart below, created in Luc
 <br>
 
 ## Table of contents
-1. Using Nextflow (suggested)
+1. [Using Nextflow (suggested)](#using-nextflow-suggested)
 	1. [Installing Nextflow](#installing-nextflow)
  	2. [Obtaining the pipeline](#obtaining-the-pipeline)
   	3. [Launch nextflow pipeline](#launch-nextflow-pipeline)
@@ -44,7 +44,7 @@ A schematic overview of the pipeline is shown in the chart below, created in Luc
 
 ***
 
-## Using Nextflow
+## Using Nextflow (suggested)
 
 ### Installing Nextflow
 Starting from version 0.2 of this pipeline, Nextflow can be used to quickly and smoothly run the pipeline on your machine. Of course, Nextflow needs to be installed in the machine. You can consult Nextflow Documentation [here](https://www.nextflow.io/docs/latest/install.html) for installation instruction. <br>
