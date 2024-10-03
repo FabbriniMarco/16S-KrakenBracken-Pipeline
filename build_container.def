@@ -5,6 +5,7 @@ From: centos:latest
     export PATH=/opt/programs/ncbi-blast/bin:"$PATH"
     export PATH=/opt/programs/kraken2:"$PATH"
     export PATH=/opt/programs/BMTagger:"$PATH"
+    export PATH=/opt/programs/bowtie2:"$PATH"
     export PATH=/opt/programs/Bracken:"$PATH"
 
 %post
@@ -15,7 +16,9 @@ From: centos:latest
     dnf update libmodulemd -y
     dnf install -y 'dnf-command(config-manager)'
     dnf config-manager --set-enabled powertools
-    dnf upgrade --refresh -y
+    dnf clean all
+    rpm --rebuilddb
+    dnf upgrade --refresh -y || true #Error transaction failed tzdata
     dnf -y install util-linux-user autoconf automake R wget cmake git pigz gcc-c++ zlib-devel.x86_64 libstdc++-static libcurl-devel openssl-devel
     yum install -y python39-devel
     unlink /usr/bin/python3
@@ -32,17 +35,28 @@ From: centos:latest
     chmod a+x ./fastp
     #NCBI BLAST+
     cd /opt/programs
-    curl ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.15.0+-x64-linux.tar.gz -o ncbi-blast-2.15.0+-x64-linux.tar.gz
-    tar -zxvf ncbi-blast-2.15.0+-x64-linux.tar.gz
-    rm -fr ncbi-blast-2.15.0+-x64-linux.tar.gz
-    mv ncbi-blast-* ncbi-blast
+    curl https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.16.0/ncbi-blast-2.16.0+-x64-linux.tar.gz -o ncbi-blast-2.16.0+-x64-linux.tar.gz || true
+    tar -zxvf ncbi-blast-2.16.0+-x64-linux.tar.gz || true
+    rm -fr ncbi-blast-2.16.0+-x64-linux.tar.gz || true
+    mv ncbi-blast-* ncbi-blast || true
     #BMTagger
     cd /opt/programs && mkdir BMTagger && cd BMTagger
     wget --reject fa,wbm ftp.ncbi.nlm.nih.gov:pub/agarwala/bmtagger/*
     chmod 755 *
     mkdir /mnt/databases/bmtagger
+    # Bowtie2
+    cd /opt/programs
+    wget https://github.com/BenLangmead/bowtie2/releases/download/v2.5.4/bowtie2-2.5.4-linux-x86_64.zip
+    unzip bowtie2-2.5.4-linux-x86_64.zip
+    rm -fr bowtie2-2.5.4-linux-x86_64.zip
+    mv bowtie2* bowtie2
     #KneadData
-    pip install kneaddata==0.7.2
+    wget https://github.com/biobakery/kneaddata/archive/refs/tags/0.7.7-alpha.tar.gz
+    tar -zxvf 0.7.7-alpha.tar.gz
+    rm -fr 0.7.7-alpha.tar.gz
+    mv kneaddata* kneaddata
+    cd kneaddata/
+    python setup.py install --bypass-dependencies-install
     cd /usr/bin
     wget https://github.com/Benson-Genomics-Lab/TRF/releases/download/v4.09.1/trf409.linux64 -O trf
     chmod +x trf
@@ -69,6 +83,7 @@ From: centos:latest
     /opt/programs/Bracken/bracken-build -d silvaNR99 -t 24 -k 35 -l 250
     rm -fr silvaNR99/database.kraken
     /opt/programs/Bracken/bracken-build -d silvaNR99 -t 24 -k 35 -l 500
+    rm -fr silvaNR99/database.kraken
     #Otu table custom processing scripts
     cd /usr/bin
     wget https://raw.githubusercontent.com/FabbriniMarco/16S-KrakenBracken-Pipeline/main/CPU_process_otutab.py
@@ -84,6 +99,7 @@ From: centos:latest
     echo -e ' 
     install.packages("ape", repos="https://cran.mirror.garr.it/CRAN/")
     install.packages("BiocManager", repos="https://cran.mirror.garr.it/CRAN/")
+    BiocManager::install(version = "3.19", ask = FALSE)
     BiocManager::install("phyloseq", update=FALSE)
     install.packages("parallel", repos="https://cran.mirror.garr.it/CRAN/")
     install.packages("doParallel", repos="https://cran.mirror.garr.it/CRAN/")
@@ -96,8 +112,8 @@ From: centos:latest
     #Get the pipeline script
     cd /usr/bin
     wget https://raw.githubusercontent.com/FabbriniMarco/16S-KrakenBracken-Pipeline/main/kraken16S.sh -O kraken16S
-    chmod +x kraken16S
+    chmod +x kraken16Sbo
 
 %labels
     Author Marco Fabbrini - fabbrinimarco.mf@gmail.com
-    Version v1
+    Version v2
