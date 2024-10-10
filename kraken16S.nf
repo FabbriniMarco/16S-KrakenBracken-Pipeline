@@ -44,14 +44,13 @@ if (params.help) {
 
 // Channel for paired-end files (compressed and uncompressed)
 Channel
-    .fromFilePairs("${params.fastq_folder}/*_{1,2,L001_R1_001,L001_R2_001}.fastq*")
+    .fromFilePairs("${params.fastq_folder}/*_{1,2}.fastq*")
     .set { paired_end_files }
 
 // Channel for single-end files (compressed and uncompressed)
 Channel
     .fromPath("${params.fastq_folder}/*.fastq*")
     .filter { !it.getName().matches(/.*_[12]\.fastq*$/) }
-    .filter { !it.getName().matches(/.*_L001_R[12]_001\.fastq*$/) }
     .map { file -> tuple(file.getSimpleName().replaceAll(/\.fastq(\.gz)?$/, ''), file) }
     .set { single_end_files }
 
