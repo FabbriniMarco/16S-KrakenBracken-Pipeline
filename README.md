@@ -69,7 +69,7 @@ mv nextflow /usr/bin/
 <br>
 
 ### Obtaining the pipeline
-In order to use the pipeline you need to have two files: the ```nextflow.config``` and ```kraken16s.nf```. You can obtain them in several ways:
+In order to use the pipeline you need to have two files: the ```nextflow.config``` and ```kraken16S.nf```. You can obtain them in several ways:
 - download them from the [Release](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases) section of this repo clicking [here](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases/download/v0.2/16s-krakenbracken-pipeline-v2.tar.gz). Extract the archive (```tar -zxvf 16s-krakenbracken-pipeline-v2.tar.gz```)
 - clone this repository with ```git clone https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline```
 - manually download the nextflow [main file](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/blob/main/kraken16S.nf) and [config file](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/blob/main/nextflow.config) from this repo
@@ -84,7 +84,7 @@ source ~/.bashrc
 
 To test the installation you can run
 ```
-nextflow run kraken16s.nf --help
+nextflow run kraken16S.nf --help
 ```
 You should see the help message:
 <div align=center>
@@ -96,7 +96,7 @@ You should see the help message:
 ### Launch nextflow pipeline
 After consulting the help section, you can start the pipeline with default steps (_i.e._ performing both ```fastp``` read processing and host genome filtering with ```KneadData```) providing an input folder and a reference genome path as such:
 ``` bash
-nextflow run kraken16s.nf --fastq_folder raw_seqs --genome_path HOST_BOWTIE2_DB_PATH
+nextflow run kraken16S.nf --fastq_folder raw_seqs --genome_path HOST_BOWTIE2_DB_PATH
 ```
 Remember to specify in the ```--genome_path``` argument the path of a *bowtie2-formatted* host genome for the KneadData filtering step (See below for the guide on [How to generate a bowtie2-compatible reference genome](#generating-a-bowtie2-compatible-reference-genome).
 <br>
@@ -104,9 +104,9 @@ Remember to specify in the ```--genome_path``` argument the path of a *bowtie2-f
 If you don't want to perform host filtering, the process can be skipped by setting the use_kneaddata argument to false. Similarly you can skip fastp read processing, if you want:
 ```bash
 # Run the pipeline without host genome filtering
-nextflow run kraken16s.nf --fastq_folder raw_seqs --use_kneaddata false
+nextflow run kraken16S.nf --fastq_folder raw_seqs --use_kneaddata false
 # Run the pipeline without host genome filtering and without clipping reads with fastp
-nextflow run kraken16s.nf --fastq_folder raw_seqs --use_kneaddata false --use_fastp false
+nextflow run kraken16S.nf --fastq_folder raw_seqs --use_kneaddata false --use_fastp false
 ```
 
 If for any reason the pipeline gets stopped, you may want to resume it by adding the ```-resume``` flag in the nextflow run command for using previously cached contents.
@@ -119,7 +119,7 @@ In the commands above, the pipeline uses all available cores on the machine, spa
 In order to control the resource usage, you can act on the nextflow call itself:
 ```bash
 # Run the script using a maximum of 20 threads and 32GB of system RAM, spawning a maximum of 20 parallel instances
-nextflow run kraken16s.nf --fastq_folder raw_seqs --genome_path "/mnt/databases/bowtie2_hg38" -process.cpus 20 -process.memory '32 GB' -process.maxForks 20
+nextflow run kraken16S.nf --fastq_folder raw_seqs --genome_path "/mnt/databases/bowtie2_hg38" -process.cpus 20 -process.memory '32 GB' -process.maxForks 20
 ```
 
 In addition, you can specify a custom kraken2-compatible database for 16S analyses, which has to be formatted for Bracken using a ```-l ${READ_LEN}``` parameter of 250 or 500. By default the pipeline uses Kraken2 special database [Silva 138.1 SSuRef NR99](https://www.arb-silva.de/). You can consult Kraken2 section concerning 16S databases [here](https://github.com/DerrickWood/kraken2/wiki/Manual#16s-databases).
