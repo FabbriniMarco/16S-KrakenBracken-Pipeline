@@ -3,7 +3,7 @@
 // Default parameters
 // params.output_folder = "./AnalysisKraken_${currentDate}"          // Output folder
 // params.fastq_folder = "seqs"                                      // Folder with FASTQ files
-// params.genome_path = "/mnt/luks/databases/hg38_bowtie2"           // Path to host filter database
+// params.genome_path = "/mnt/luks/databases/hg38_bowtie2"           // Path to host filter database in local machine
 // params.kraken_db_path = "/mnt/databases/kraken_db/silvaNR99"      // Path to kraken2 silvaNR99 database
 // params.readlength_paired = 250                                    // Read length for bracken database for paired-end reads
 // params.readlength_single = 500                                    // Read length for bracken database for single-end reads
@@ -44,13 +44,14 @@ if (params.help) {
 
 // Channel for paired-end files (compressed and uncompressed)
 Channel
-    .fromFilePairs("${params.fastq_folder}/*_{1,2}.fastq*")
+    .fromFilePairs("${params.fastq_folder}/*_{1,2,L001_R1_001,L001_R2_001}.fastq*")
     .set { paired_end_files }
 
 // Channel for single-end files (compressed and uncompressed)
 Channel
     .fromPath("${params.fastq_folder}/*.fastq*")
-    .filter { !it.getName().matches(/.*_[12]\.fastq.gz$/) }
+    .filter { !it.getName().matches(/.*_[12]\.fastq*$/) }
+    .filter { !it.getName().matches(/.*_L001_R[12]_001\.fastq*$/) }
     .map { file -> tuple(file.getSimpleName().replaceAll(/\.fastq(\.gz)?$/, ''), file) }
     .set { single_end_files }
 
