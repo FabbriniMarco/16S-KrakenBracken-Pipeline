@@ -70,25 +70,25 @@ mv nextflow /usr/bin/
 
 ### Obtaining the pipeline
 In order to use the pipeline you need to have two files: the ```nextflow.config``` and ```kraken16S.nf```. You can obtain them in several ways:
-- download them from the [Release](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases) section of this repo clicking [here](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases/download/v0.2/16s-krakenbracken-pipeline-v2.tar.gz). Extract the archive (```tar -zxvf 16s-krakenbracken-pipeline-v2.tar.gz```)
+- download them from the [Release](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases) section of this repo clicking [here](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases/download/v0.2/16s-krakenbracken-pipeline-v2.tar.gz). Extract the archive (```tar -zxvf 16s-krakenbracken-pipeline-v2.2.tar.gz```)
 - clone this repository with ```git clone https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline```
 - manually download the nextflow [main file](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/blob/main/kraken16S.nf) and [config file](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/blob/main/nextflow.config) from this repo
 
 <br>
 
-Once you have obtained the files you can add the folder to $PATH to be able to launch the pipeline from anywhere on your machine:
+Once you have obtained the files place them in a desided folder:
 ```bash
-echo 'export PATH="/path/to/16s-krakenbracken-pipeline-v2/:$PATH"' >> ~/.bashrc
-source ~/.bashrc
+cd /opt/programs #Any folder of your choice
+git clone https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline
 ```
 
 To test the installation you can run
 ```
-nextflow run kraken16S.nf --help
+nextflow run /opt/programs/16S-KrakenBracken-Pipeline/kraken16S.nf --help
 ```
 You should see the help message:
 <div align=center>
-  <img alt="Help section" src="https://github.com/user-attachments/assets/96d36e50-836f-4811-b398-ce6aa3e96b48" >
+  <img alt="Help section" src="https://github.com/user-attachments/assets/053a7915-7f36-47b1-aa39-d6625ded7b27" >
 </div>
 
 <br>
@@ -96,7 +96,7 @@ You should see the help message:
 ### Launch nextflow pipeline
 After consulting the help section, you can start the pipeline with default steps (_i.e._ performing both ```fastp``` read processing and host genome filtering with ```KneadData```) providing an input folder and a reference genome path as such:
 ``` bash
-nextflow run kraken16S.nf --fastq_folder raw_seqs --genome_path HOST_BOWTIE2_DB_PATH
+nextflow run /opt/programs/16S-KrakenBracken-Pipeline/kraken16S.nf --fastq_folder raw_seqs --genome_path HOST_BOWTIE2_DB_PATH
 ```
 Remember to specify in the ```--genome_path``` argument the path of a *bowtie2-formatted* host genome for the KneadData filtering step (See below for the guide on [How to generate a bowtie2-compatible reference genome](#generating-a-bowtie2-compatible-reference-genome).
 <br>
@@ -104,9 +104,9 @@ Remember to specify in the ```--genome_path``` argument the path of a *bowtie2-f
 If you don't want to perform host filtering, the process can be skipped by setting the use_kneaddata argument to false. Similarly you can skip fastp read processing, if you want:
 ```bash
 # Run the pipeline without host genome filtering
-nextflow run kraken16S.nf --fastq_folder raw_seqs --use_kneaddata false
+nextflow run /opt/programs/16S-KrakenBracken-Pipeline/kraken16S.nf --fastq_folder raw_seqs --use_kneaddata false
 # Run the pipeline without host genome filtering and without clipping reads with fastp
-nextflow run kraken16S.nf --fastq_folder raw_seqs --use_kneaddata false --use_fastp false
+nextflow run /opt/programs/16S-KrakenBracken-Pipeline/kraken16S.nf --fastq_folder raw_seqs --use_kneaddata false --use_fastp false
 ```
 
 If for any reason the pipeline gets stopped, you may want to resume it by adding the ```-resume``` flag in the nextflow run command for using previously cached contents.
@@ -119,16 +119,16 @@ In the commands above, the pipeline uses all available cores on the machine, spa
 In order to control the resource usage, you can act on the nextflow call itself:
 ```bash
 # Run the script using a maximum of 20 threads and 32GB of system RAM, spawning a maximum of 20 parallel instances
-nextflow run kraken16S.nf --fastq_folder raw_seqs --genome_path "/mnt/databases/bowtie2_hg38" -process.cpus 20 -process.memory '32 GB' -process.maxForks 20
+nextflow run /opt/programs/16S-KrakenBracken-Pipeline/kraken16S.nf --fastq_folder raw_seqs --genome_path "/mnt/databases/bowtie2_hg38" -process.cpus 20 -process.memory '32 GB' -process.maxForks 20
 ```
 
-In addition, you can specify a custom kraken2-compatible database for 16S analyses, which has to be formatted for Bracken using a ```-l ${READ_LEN}``` parameter of 250 or 500. By default the pipeline uses Kraken2 special database [Silva 138.1 SSuRef NR99](https://www.arb-silva.de/). You can consult Kraken2 section concerning 16S databases [here](https://github.com/DerrickWood/kraken2/wiki/Manual#16s-databases).
+By default the pipeline uses Kraken2 special database [Silva 138.1 SSuRef NR99](https://www.arb-silva.de/). For the moment it's not possible to make use of any other 16S database. You can consult Kraken2 section concerning 16S databases [here](https://github.com/DerrickWood/kraken2/wiki/Manual#16s-databases).
 
 <br>
 <br>
 
 ### Generating a bowtie2-compatible reference genome
-In order to filter the host genome using the nextflow pipeline you need to have a local copy of the host genome, indexed for bowtie2.
+In order to filter the host genome using the nextflow pipeline you need to have a local copy of the host genome of choice, indexed for bowtie2.
 ```bash
 # Download a reference genome in FASTA format, for example the human genome
 cd /mnt/databases # Custom directory of your choice
@@ -192,6 +192,8 @@ nextflow clean -f -q
 rm -fr AnalysisKraken_*/fastp
 rm -fr AnalysisKraken_*/kraken2
 rm -fr AnalysisKraken_*/bracken
+# if host filtering with kneaddata is performed, you can delete the temporary folder as well
+rm -fr AnalysisKraken_*/host_filtering
 ```
 
 <br>
@@ -388,8 +390,11 @@ For example, you can control the number of parallel threads used for the read ma
 You can also decide to perform only taxonomic assignment and skip the alpha and beta diversity analyses, or keep the temp files (i.e., the kraken2 and bracken outputs, as well as filtered reads).
 
 <br>
+
+Concerning the use of the legacy script, you can for sure use the kraken16S.sh script that you find in this github repo without the singularity container, providing in PATH all the required executables and files (this is the most 'you're a wizard Harry!' option).
 <br>
 
+<br>
 ***
 
 ## Citation
@@ -407,6 +412,29 @@ If you use this pipeline, please cite it as such:
 ```
 Example: 
 > Fabbrini, M. (2024) '16S-KrakenBracken-Pipeline - Containerized pipeline for 16S rRNA amplicon sequencing analyses using Kraken2/Bracken'. Available on GitHub: https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline
+
+<br>
+
+
+Consider giving credits to the pipeline dependencies as well:
+- [Singularity](https://docs.sylabs.io/guides/latest/user-guide/license.html)
+- [Nextflow](https://www.nextflow.io/about-us.html)
+- [Kraken2](https://github.com/DerrickWood/kraken2)
+- [Bracken](https://github.com/jenniferlu717/Bracken)
+- [SILVA database](https://www.arb-silva.de/contact/)
+- [Pigz](https://github.com/madler/pigz)
+- [KneadData](https://github.com/biobakery/kneaddata)
+- [fastp](https://github.com/OpenGene/fastp)
+- [Bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml)
+- [BMTagger](https://www.hmpdacc.org/doc/HumanSequenceRemoval_SOP.pdf) (legacy script only)
+- [pandas](https://pandas.pydata.org/about/citing.html) (used in the CPU_process_otutab*.py scripts)
+- [numpy](https://numpy.org/citing-numpy/) (used in the CPU_process_otutab*.py scripts)
+- [ape](https://cran.r-project.org/web/packages/ape/index.html)
+- [vegan](https://cran.r-project.org/web/packages/vegan/index.html)
+- [picante](https://cran.r-project.org/web/packages/picante/index.html)
+- [otuSummary](https://cran.r-project.org/web/packages/otuSummary/index.html)
+- [openxlsx](https://cran.r-project.org/web/packages/openxlsx/index.html)
+- [phyloseq](https://github.com/joey711/phyloseq)
 
 
 
