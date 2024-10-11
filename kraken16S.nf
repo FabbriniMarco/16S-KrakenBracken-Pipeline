@@ -19,7 +19,6 @@ if (params.help) {
       \u001B[1;33m--fastq_folder\u001B[0m        Path to the folder containing input FASTQ files [\u001B[1;35mdefault: './seqs'\u001B[0m]
       \u001B[1;33m--output_folder\u001B[0m       Path to the folder for storing results [\u001B[1;35mdefault: './AnalysisKraken_\${currentDate}'\u001B[0m]
       \u001B[1;33m--genome_path\u001B[0m         Path to the genome reference database for KneadData [\u001B[1;35mdefault: 'none'\u001B[0m, MUST be provided if use_kneaddata is set to true]
-      \u001B[1;33m--kraken_db_path\u001B[0m      Path to the Kraken2 database [\u001B[1;35mdefault: '/mnt/databases/kraken_db/silvaNR99'\u001B[0m inside the singularity container]
       \u001B[1;33m--readlength_paired\u001B[0m   Read length for paired-end reads (250/500) [\u001B[1;35mdefault: 250\u001B[0m]
       \u001B[1;33m--readlength_single\u001B[0m   Read length for single-end reads (250/500) [\u001B[1;35mdefault: 500\u001B[0m]
       \u001B[1;33m--use_fastp\u001B[0m           Enable or disable fastp (true/false) [\u001B[1;35mdefault: true\u001B[0m]
@@ -44,22 +43,42 @@ if (params.help) {
 
 // Channel for paired-end files (compressed and uncompressed)
 Channel
-    .fromFilePairs("${params.fastq_folder}/*_{1,2}.fastq*")
-    .set { paired_end_files }
+        .fromFilePairs("${params.fastq_folder}/*_{1,2}.fastq*")
+        .set { paired_end_files }
+
+Channel
+        .fromFilePairs("${params.fastq_folder}/*_S[0-9]*_L001_R{1,2}_001.fastq*")
+        .set { reads_to_rename }
 
 // Channel for single-end files (compressed and uncompressed)
 Channel
     .fromPath("${params.fastq_folder}/*.fastq*")
-    .filter { !it.getName().matches(/.*_[12]\.fastq*$/) }
+    .filter { !it.getName().matches(/.*_[12]\.fastq(?:\.gz)?$/) }
+    .filter { !it.getName().matches(/.*_L001_R[12]_001\.fastq(?:\.gz)?$/) }
     .map { file -> tuple(file.getSimpleName().replaceAll(/\.fastq(\.gz)?$/, ''), file) }
     .set { single_end_files }
 
-// Merge paired and single-end files
-all_fastq_files = paired_end_files.mix(single_end_files)
 
-// Filter compressed (.fastq.gz) and uncompressed (.fastq) files
-compressed_fastq_files = all_fastq_files.filter { it -> it[1] instanceof List ? it[1].every { f -> f.name.endsWith('.fastq.gz') } : it[1].name.endsWith('.fastq.gz') }
-uncompressed_fastq_files = all_fastq_files.filter { it -> it[1] instanceof List ? it[1].every { f -> f.name.endsWith('.fastq') } : it[1].name.endsWith('.fastq') }
+process fix_read_names {
+    cleanup 'onSuccess'
+
+    input:
+    tuple val(id), path(reads)
+
+    output:
+    tuple val(id), path("${id}/*.fastq*")
+
+    stageInMode 'copy'
+
+    script:
+    """
+    mkdir -p ${id}
+    for file in ${reads}; do
+        new_name=\$(echo \$(basename "\${file}") | sed -E 's/_S[0-9]+_L[0-9]+_R([12])_001(\\.fastq(\\.gz)?)\$/_\\1\\2/')
+        cp "\${file}" "${id}/\${new_name}"
+    done
+    """
+}
 
 
 // Decompress only compressed (.fastq.gz) files
@@ -128,11 +147,12 @@ process kneaddata {
     if [ -f "${reads[1]}" ]; then
         # Paired-end data
         kneaddata --input ${reads[0]} --input ${reads[1]} \\
-        --reference-db ${params.genome_path} \\
+        --reference-db /data/genomes \\
         --output . \\
         --threads 1 --processes 1 \\
         --max-memory 3g \\
         --bypass-trim \\
+        --bowtie2 /opt/programs/bowtie2 \\
         --remove-intermediate-output
 
         # Adjust headers and rename files
@@ -147,11 +167,12 @@ process kneaddata {
     else
         # Single-end data
         kneaddata --input ${reads[0]} \\
-        --reference-db ${params.genome_path} \\
+        --reference-db /data/genomes \\
         --output . \\
         --threads 1 --processes 1 \\
         --max-memory 3g \\
         --bypass-trim \\
+        --bowtie2 /opt/programs/bowtie2 \\
         --remove-intermediate-output
 
         # Adjust headers
@@ -182,13 +203,15 @@ process kraken2 {
     script:
     """
     mkdir -p ${id}
+    echo "Checking /mnt/databases/kraken_db/silvaNR99"
+    ls -l /mnt/databases/kraken_db/silvaNR99 > dblist
     # Detect if it's paired-end or single-end based on the number of elements in reads
     if [ -f "${reads[1]}" ]; then
         # Paired-end data
-        kraken2 --db ${params.kraken_db_path} --gzip-compressed --threads 3 --report ${id}/${id}_paired-end.kreport --paired ${reads[0]} ${reads[1]} 1> /dev/null 2> /dev/null
+        /opt/programs/kraken2/kraken2 --db /mnt/databases/kraken_db/silvaNR99 --gzip-compressed --threads 3 --report ${id}/${id}_paired-end.kreport --paired ${reads[0]} ${reads[1]}
     else
         # Single-end data
-        kraken2 --db ${params.kraken_db_path} --gzip-compressed --threads 3 --report ${id}/${id}_single-end.kreport ${reads} 1> /dev/null 2> /dev/null
+        /opt.programs/kraken2/kraken2 --db /mnt/databases/kraken_db/silvaNR99 --gzip-compressed --threads 3 --report ${id}/${id}_single-end.kreport ${reads} 1> /dev/null 2> /dev/null
     fi
     """
 }
@@ -213,14 +236,14 @@ process bracken {
     # Detect if it's paired-end or single-end based on the number of elements in reads
     if [[ "${kreportFile}" == *"_paired-end.kreport" ]]; then
         # Paired-end data
-        bracken -d ${params.kraken_db_path} -i ${id}_paired-end.kreport -o ${id}/${id}_phyla.bracken -r ${params.readlength_paired} -l P
-        bracken -d ${params.kraken_db_path} -i ${id}_paired-end.kreport -o ${id}/${id}_families.bracken -r ${params.readlength_paired} -l F
-        bracken -d ${params.kraken_db_path} -i ${id}_paired-end.kreport -o ${id}/${id}_genera.bracken -r ${params.readlength_paired} -l G
+        /opt/programs/Bracken/bracken -d /mnt/databases/kraken_db/silvaNR99 -i ${id}_paired-end.kreport -o ${id}/${id}_phyla.bracken -r ${params.readlength_paired} -l P
+        /opt/programs/Bracken/bracken -d /mnt/databases/kraken_db/silvaNR99 -i ${id}_paired-end.kreport -o ${id}/${id}_families.bracken -r ${params.readlength_paired} -l F
+        /opt/programs/Bracken/bracken -d /mnt/databases/kraken_db/silvaNR99 -i ${id}_paired-end.kreport -o ${id}/${id}_genera.bracken -r ${params.readlength_paired} -l G
     else
         # Single-end data
-        bracken -d ${params.kraken_db_path} -i ${id}_single-end.kreport -o ${id}/${id}_phyla.bracken -r ${params.readlength_single} -l P
-        bracken -d ${params.kraken_db_path} -i ${id}_single-end.kreport -o ${id}/${id}_families.bracken -r ${params.readlength_single} -l F
-        bracken -d ${params.kraken_db_path} -i ${id}_single-end.kreport -o ${id}/${id}_genera.bracken -r ${params.readlength_single} -l G
+        /opt/programs/Bracken/bracken -d /mnt/databases/kraken_db/silvaNR99 -i ${id}_single-end.kreport -o ${id}/${id}_phyla.bracken -r ${params.readlength_single} -l P
+        /opt/programs/Bracken/bracken -d /mnt/databases/kraken_db/silvaNR99 -i ${id}_single-end.kreport -o ${id}/${id}_families.bracken -r ${params.readlength_single} -l F
+        /opt/programs/Bracken/bracken -d /mnt/databases/kraken_db/silvaNR99 -i ${id}_single-end.kreport -o ${id}/${id}_genera.bracken -r ${params.readlength_single} -l G
     fi
     """
 }
@@ -298,6 +321,16 @@ process calculate_diversity {
 
 // Define the workflow
 workflow {
+    //Solve read names for *_S[0-9]*_L001_R{1,2}_001.fastq* files
+    renamed_reads = fix_read_names(reads_to_rename)
+
+    // Merge paired and single-end files
+    all_fastq_files = paired_end_files.mix(renamed_reads, single_end_files)
+
+    // Filter compressed (.fastq.gz) and uncompressed (.fastq) files
+    compressed_fastq_files = all_fastq_files.filter { it -> it[1] instanceof List ? it[1].every { f -> f.name.endsWith('.fastq.gz') } : it[1].name.endsWith('.fastq.gz') }
+    uncompressed_fastq_files = all_fastq_files.filter { it -> it[1] instanceof List ? it[1].every { f -> f.name.endsWith('.fastq') } : it[1].name.endsWith('.fastq') }
+
     // Compress eventually decompressed .fastq files
     compressed_files = compress_reads(uncompressed_fastq_files)
 
@@ -332,4 +365,5 @@ workflow {
     matrix_otutables = generate_matrix_otutables(combined_otu_table)
     diversity = calculate_diversity(matrix_otutables)
 }
-// 03.10.2024 - Fabbrini Marco - fabbrinimarcoo.mf@gmail.com
+// 11.10.2024 - Fabbrini Marco - fabbrinimarcoo.mf@gmail.com
+
