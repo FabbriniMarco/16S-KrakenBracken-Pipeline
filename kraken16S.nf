@@ -3,8 +3,8 @@
 // Default parameters
 // params.output_folder = "./AnalysisKraken_${currentDate}"          // Output folder
 // params.fastq_folder = "seqs"                                      // Folder with FASTQ files
-// params.genome_path = "/mnt/luks/databases/hg38_bowtie2"           // Path to host filter database in local machine
-// params.kraken_db_path = "/mnt/databases/kraken_db/silvaNR99"      // Path to kraken2 silvaNR99 database
+// params.genome_path = null                                         // Path to host filter database in local machine
+// params.kraken_db_path = "/mnt/databases/kraken_db/silvaNR99"      // Path to kraken2 silvaNR99 database inside the container
 // params.readlength_paired = 250                                    // Read length for bracken database for paired-end reads
 // params.readlength_single = 500                                    // Read length for bracken database for single-end reads
 // params.use_fastp = true                                           // Use fastp to clean and clip reads
@@ -18,7 +18,7 @@ if (params.help) {
     \u001B[1;32mOptions:\u001B[0m
       \u001B[1;33m--fastq_folder\u001B[0m        Path to the folder containing input FASTQ files [\u001B[1;35mdefault: './seqs'\u001B[0m]
       \u001B[1;33m--output_folder\u001B[0m       Path to the folder for storing results [\u001B[1;35mdefault: './AnalysisKraken_\${currentDate}'\u001B[0m]
-      \u001B[1;33m--genome_path\u001B[0m         Path to the genome reference database for KneadData [\u001B[1;35mdefault: 'none'\u001B[0m, MUST be provided if use_kneaddata is set to true]
+      \u001B[1;33m--genome_path\u001B[0m         Path to the genome reference database for KneadData [\u001B[1;35mdefault: 'null'\u001B[0m, MUST be provided if use_kneaddata is set to true]
       \u001B[1;33m--readlength_paired\u001B[0m   Read length for paired-end reads (250/500) [\u001B[1;35mdefault: 250\u001B[0m]
       \u001B[1;33m--readlength_single\u001B[0m   Read length for single-end reads (250/500) [\u001B[1;35mdefault: 500\u001B[0m]
       \u001B[1;33m--use_fastp\u001B[0m           Enable or disable fastp (true/false) [\u001B[1;35mdefault: true\u001B[0m]
@@ -117,10 +117,10 @@ process fastp {
     # Detect if it's paired-end or single-end based on the number of elements in reads
     if [ -f "${reads[1]}" ]; then
         # Paired-end data
-        fastp -i ${reads[0]} -I ${reads[1]} -o ${id}/${id}_1.fastq.gz -O ${id}/${id}_2.fastq.gz
+        fastp -i ${reads[0]} -I ${reads[1]} -o ${id}/${id}_1.fastq.gz -O ${id}/${id}_2.fastq.gz --detect_adapter_for_pe --dont_eval_duplication --length_required 50 --correction --overlap_len_require 20
     else
         # Single-end data
-        fastp -i ${reads[0]} -o ${id}/${id}.fastq.gz
+        fastp -i ${reads[0]} -o ${id}/${id}.fastq.gz --dont_eval_duplication --length_required 100
     fi
     """
 }
@@ -203,15 +203,13 @@ process kraken2 {
     script:
     """
     mkdir -p ${id}
-    echo "Checking /mnt/databases/kraken_db/silvaNR99"
-    ls -l /mnt/databases/kraken_db/silvaNR99 > dblist
     # Detect if it's paired-end or single-end based on the number of elements in reads
     if [ -f "${reads[1]}" ]; then
         # Paired-end data
         /opt/programs/kraken2/kraken2 --db /mnt/databases/kraken_db/silvaNR99 --gzip-compressed --threads 3 --report ${id}/${id}_paired-end.kreport --paired ${reads[0]} ${reads[1]}
     else
         # Single-end data
-        /opt.programs/kraken2/kraken2 --db /mnt/databases/kraken_db/silvaNR99 --gzip-compressed --threads 3 --report ${id}/${id}_single-end.kreport ${reads} 1> /dev/null 2> /dev/null
+        /opt/programs/kraken2/kraken2 --db /mnt/databases/kraken_db/silvaNR99 --gzip-compressed --threads 3 --report ${id}/${id}_single-end.kreport ${reads} 1> /dev/null 2> /dev/null
     fi
     """
 }
@@ -365,5 +363,5 @@ workflow {
     matrix_otutables = generate_matrix_otutables(combined_otu_table)
     diversity = calculate_diversity(matrix_otutables)
 }
-// 11.10.2024 - Fabbrini Marco - fabbrinimarcoo.mf@gmail.com
+// 02.10.2025 - Fabbrini Marco - fabbrinimarcoo.mf@gmail.com
 

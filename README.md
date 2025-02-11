@@ -47,7 +47,7 @@ A schematic overview of the pipeline is shown in the chart below, created in Luc
 ## Using Nextflow (suggested)
 
 ### Installing Nextflow
-Starting from version 0.2 of this pipeline, Nextflow can be used to quickly and smoothly run the pipeline on your machine. Of course, Nextflow needs to be installed in the machine. You can consult Nextflow Documentation [here](https://www.nextflow.io/docs/latest/install.html) for installation instruction. <br>
+Starting from version 0.2.x of this pipeline, Nextflow can be used to quickly and smoothly run the pipeline on your machine. Of course, Nextflow needs to be installed in the machine. You can consult Nextflow Documentation [here](https://www.nextflow.io/docs/latest/install.html) for installation instruction. <br>
 Briefly, if you don't have Java 11+ installed on your system you can install it via SDKMAN as such:
 ```bash
 curl -s https://get.sdkman.io | bash
@@ -70,7 +70,7 @@ mv nextflow /usr/bin/
 
 ### Obtaining the pipeline
 In order to use the pipeline you need to have two files: the ```nextflow.config``` and ```kraken16S.nf```. You can obtain them in several ways:
-- download them from the [Release](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases) section of this repo clicking [here](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases/download/v0.2/16s-krakenbracken-pipeline-v2.tar.gz). Extract the archive (```tar -zxvf 16s-krakenbracken-pipeline-v2.2.tar.gz```)
+- download them from the [Release](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases) section of this repo clicking [here](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/releases/download/v0.2/16s-krakenbracken-pipeline-v2.tar.gz). Extract the archive (```tar -zxvf 16s-krakenbracken-pipeline-v2.3.tar.gz```)
 - clone this repository with ```git clone https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline```
 - manually download the nextflow [main file](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/blob/main/kraken16S.nf) and [config file](https://github.com/FabbriniMarco/16S-KrakenBracken-Pipeline/blob/main/nextflow.config) from this repo
 
@@ -119,6 +119,7 @@ In the commands above, the pipeline uses all available cores on the machine, spa
 In order to control the resource usage, you can act on the nextflow call itself:
 ```bash
 # Run the script using a maximum of 20 threads and 32GB of system RAM, spawning a maximum of 20 parallel instances
+# Consider the Bowtie2-formatted host genome for filtering is in the /mnt/databases/bowtie2_hg38 folder
 nextflow run /opt/programs/16S-KrakenBracken-Pipeline/kraken16S.nf --fastq_folder raw_seqs --genome_path "/mnt/databases/bowtie2_hg38" -process.cpus 20 -process.memory '32 GB' -process.maxForks 20
 ```
 
@@ -188,7 +189,7 @@ After the nextflow run is completed, you can get rid of temporary files - if you
 ```bash
 nextflow clean -f -q
 
-# You can also delete the fastp, kraken2 and bracken folders
+# You can also delete the fastp, kraken2 and bracken folders if you're only interested in alpha, beta and compositional outputs:
 rm -fr AnalysisKraken_*/fastp
 rm -fr AnalysisKraken_*/kraken2
 rm -fr AnalysisKraken_*/bracken
