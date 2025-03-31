@@ -363,5 +363,5 @@ workflow {
     matrix_otutables = generate_matrix_otutables(combined_otu_table)
     diversity = calculate_diversity(matrix_otutables)
 }
-// 02.10.2025 - Fabbrini Marco - fabbrinimarcoo.mf@gmail.com
+// 02.10.2025 - Fabbrini Marco - fabbrinimarco.mf@gmail.com
 
