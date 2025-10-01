@@ -1,4 +1,6 @@
 #!/usr/bin/env nextflow
+import java.nio.file.Files
+import java.nio.file.Path
 
 // Default parameters
 // params.output_folder = "./AnalysisKraken_${currentDate}"          // Output folder
@@ -9,6 +11,8 @@
 // params.readlength_single = 500                                    // Read length for bracken database for single-end reads
 // params.use_fastp = true                                           // Use fastp to clean and clip reads
 // params.use_kneaddata = true                                       // Perform host filtering using KneadData implementing bowtie2
+// params.kneaddata_threads = 5                                      // Default number of threads for KneadData
+// params.kreport_threshold = 10                                     // Automatic filtering of low-call Kraken2 assignments
 // params.help = false                                               // Print the help
 
 // Display help message if params.help is true
@@ -23,6 +27,7 @@ if (params.help) {
       \u001B[1;33m--readlength_single\u001B[0m   Read length for single-end reads (250/500) [\u001B[1;35mdefault: 500\u001B[0m]
       \u001B[1;33m--use_fastp\u001B[0m           Enable or disable fastp (true/false) [\u001B[1;35mdefault: true\u001B[0m]
       \u001B[1;33m--use_kneaddata\u001B[0m       Enable or disable KneadData (true/false) [\u001B[1;35mdefault: true\u001B[0m]
+      \u001B[1;33m--kreport_threshold\u001B[0m   Threshold read count assigned to at least 1 taxon at genus level for discarding empty kreport before Bracken  [\u001B[1;35mdefault: 10\u001B[0m]
       \u001B[1;33m--help\u001B[0m                Show this help message
 
     \u001B[1;32mExample fast run (use max processor available and skip host genome filtering):\u001B[0m
@@ -59,6 +64,26 @@ Channel
     .set { single_end_files }
 
 
+def hasGWithCol3AtLeast(Path file, threshold) {
+    def br = Files.newBufferedReader(file)
+    try {
+        String line
+        while ((line = br.readLine()) != null) {
+            def cols = line.split('\t')
+            if (cols.size() >= 4 && cols[3] == 'G') {
+                try {
+                    if ((cols[2] as BigDecimal) >= (threshold as BigDecimal)) return true
+                } catch (ignored) {}
+            }
+        }
+        return false
+    } finally {
+        br.close()
+    }
+}
+
+
+
 process fix_read_names {
     cleanup 'onSuccess'
 
@@ -81,7 +106,7 @@ process fix_read_names {
 }
 
 
-// Decompress only compressed (.fastq.gz) files
+// Compress only decompressed (.fastq) files - ensure we work with all .gz
 process compress_reads {
     cleanup 'onSuccess'
 
@@ -95,7 +120,7 @@ process compress_reads {
 
     script:
     """
-    pigz -p 1 ${reads}
+    pigz ${reads}
     """
 }
 
@@ -148,9 +173,8 @@ process kneaddata {
         # Paired-end data
         kneaddata --input ${reads[0]} --input ${reads[1]} \\
         --reference-db /data/genomes \\
+        --threads ${params.kneaddata_threads} \\
         --output . \\
-        --threads 1 --processes 1 \\
-        --max-memory 3g \\
         --bypass-trim \\
         --bowtie2 /opt/programs/bowtie2 \\
         --remove-intermediate-output
@@ -163,14 +187,13 @@ process kneaddata {
         sed -i "s/:N/ 1:N/g" ${id}/${id}_1.fastq
         sed -i "s/\\#0\\/2//g" ${id}/${id}_2.fastq
         sed -i "s/:N/ 2:N/g" ${id}/${id}_2.fastq
-        pigz -p 3 ${id}/*.fastq
+        pigz ${id}/*.fastq
     else
         # Single-end data
         kneaddata --input ${reads[0]} \\
         --reference-db /data/genomes \\
+        --threads ${params.kneaddata_threads} \\
         --output . \\
-        --threads 1 --processes 1 \\
-        --max-memory 3g \\
         --bypass-trim \\
         --bowtie2 /opt/programs/bowtie2 \\
         --remove-intermediate-output
@@ -180,7 +203,7 @@ process kneaddata {
         mv ${id}_kneaddata.fastq ${id}/${id}.fastq
         sed -i "s/\\#0\\/1//g" ${id}/${id}.fastq
         sed -i "s/:N/ 1:N/g" ${id}/${id}.fastq
-        pigz -p 3 ${id}/${id}.fastq
+        pigz ${id}/${id}.fastq
     fi
     """
 }
@@ -206,10 +229,10 @@ process kraken2 {
     # Detect if it's paired-end or single-end based on the number of elements in reads
     if [ -f "${reads[1]}" ]; then
         # Paired-end data
-        /opt/programs/kraken2/kraken2 --db /mnt/databases/kraken_db/silvaNR99 --gzip-compressed --threads 3 --report ${id}/${id}_paired-end.kreport --paired ${reads[0]} ${reads[1]}
+        /opt/programs/kraken2/kraken2 --db /mnt/databases/kraken_db/silvaNR99 --gzip-compressed --report ${id}/${id}_paired-end.kreport --paired ${reads[0]} ${reads[1]}
     else
         # Single-end data
-        /opt/programs/kraken2/kraken2 --db /mnt/databases/kraken_db/silvaNR99 --gzip-compressed --threads 3 --report ${id}/${id}_single-end.kreport ${reads} 1> /dev/null 2> /dev/null
+        /opt/programs/kraken2/kraken2 --db /mnt/databases/kraken_db/silvaNR99 --gzip-compressed --report ${id}/${id}_single-end.kreport ${reads} 1> /dev/null 2> /dev/null
     fi
     """
 }
@@ -248,15 +271,15 @@ process bracken {
 
 process generate_otu_tables {
     input:
-    tuple val(id), path(kreportFiles)
+    tuple val(id), path(brackenFiles)
 
     output:
     path "${id}_otu_table.tsv"
 
     script:
-    firstFile = kreportFiles[0]
-    secondFile = kreportFiles[1]
-    thirdFile = kreportFiles[2]
+    firstFile = brackenFiles[0]
+    secondFile = brackenFiles[1]
+    thirdFile = brackenFiles[2]
 
     """
     # Append families, genera, and phyla to the ${id}_otu_table.tsv
@@ -352,8 +375,29 @@ workflow {
     // Align reads on Silva SSURef 138.1 NR99 with Kraken2
     kraken2_out = kraken2(kneaddata_out)
 
-    // Collect compositional details with Bracken
-    bracken_out = bracken(kraken2_out)
+    // attach QC flag
+    qc = kraken2_out.map { id, kreport ->
+        def ok = hasGWithCol3AtLeast(kreport as Path, params.kreport_threshold)
+        tuple(id, kreport, ok)
+    }
+
+    // split into pass/fail without branch()
+    kraken2_pass = qc.filter { id, kreport, ok -> ok }
+                    .map    { id, kreport, ok -> tuple(id, kreport) }
+
+    kraken2_fail = qc.filter { id, kreport, ok -> !ok }
+                    .map    { id, kreport, ok -> tuple(id, kreport) }
+
+    // continue with only passing samples
+    bracken_out = bracken(kraken2_pass)
+
+    // write a CSV of fails (always create file with header)
+    header_ch = Channel.of('id,filename,path,bytes')
+    fail_lines_ch = kraken2_fail.map { id, kreport ->
+        "${id},${kreport.getFileName()},${kreport.toString()},${Files.size(kreport as Path)}"
+    }
+    header_ch.concat(fail_lines_ch)
+        .collectFile(name: 'kraken2_fail.csv', storeDir: "${params.output_folder}/kraken2")
 
     // Generate a tidy otu table
     otutab = generate_otu_tables(bracken_out)
@@ -363,5 +407,5 @@ workflow {
     matrix_otutables = generate_matrix_otutables(combined_otu_table)
     diversity = calculate_diversity(matrix_otutables)
 }
-// 02.10.2025 - Fabbrini Marco - fabbrinimarco.mf@gmail.com
+// v0.3 - 10.01.2025 (MM-dd-YYYY) - Fabbrini Marco - fabbrinimarco.mf@gmail.com
 
